@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ChopperScript">
+    <output-path>$PROJECT_DIR$/out/artifacts/ChopperScript</output-path>
+    <root id="archive" name="ChopperScript.jar">
+      <element id="module-output" name="Wood Chopper Script" />
+    </root>
+  </artifact>
+</component>
