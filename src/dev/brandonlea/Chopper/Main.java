@@ -9,37 +9,96 @@ import org.osbot.rs07.utility.ConditionalSleep;
 @ScriptManifest(name = "Chopper", author = "Brandonlea", logo = "", version = 1.0, info = "Wood cutting script tutorial")
 public class Main extends Script {
 
-    private Area wcArea = new Area(3123, 3456, 3148, 3418);
+    private Area wcArea = new Area(3123, 3456, 3148, 3418),
+    bankArea = new Area(3179, 3447, 3190, 3433);
 
     @Override
     public int onLoop() throws InterruptedException {
 
-        if(!wcArea.contains(myPlayer())) {
+        if(!getInventory().contains("Bronze axe")) {
+            checkItem();
+        } else if(!getInventory().isFull()) {
+            chopTree();
+        } else {
+            bankDeposit();
+        }
+
+        return 603;
+    }
+
+    private void chopTree() {
+        RS2Object tree = getObjects().closest("Tree");
+
+        if(!myPlayer().isAnimating() && tree.isVisible()) {
+            new ConditionalSleep(1000, 1500) {
+                @Override
+                public boolean condition() throws InterruptedException {
+                    log("Using Anti-Ban");
+                    return false;
+                }
+            }.sleep();
+        }
+
+        if(!myPlayer().isAnimating() && tree != null) {
+            if(tree.interact("Chop Down")) {
+                new ConditionalSleep(5000, 2000) {
+                    @Override
+                    public boolean condition() throws InterruptedException {
+                        return !myPlayer().isAnimating();
+                    }
+                }.sleep();
+            }
+        } else if(tree == null || !wcArea.contains(myPosition())) {
+            getCamera().toEntity(tree);
+            log("Searching for Tree...");
+
             if(getWalking().webWalk(wcArea)) {
-                new ConditionalSleep(2000, 5000) {
+                new ConditionalSleep(5000, 2000) {
+                    @Override
+                    public boolean condition() throws InterruptedException {
+                        return tree.isVisible();
+                    }
+                }.sleep();
+            }
+        }
+    }
+
+    private void bankDeposit() throws InterruptedException {
+        if(!bankArea.contains(myPosition())) {
+            if(getWalking().webWalk(bankArea)) {
+                new ConditionalSleep(5000, 250) {
                     @Override
                     public boolean condition() throws InterruptedException {
                         return false;
                     }
                 }.sleep();
             }
+        } else if(!bank.isOpen()) {
+            bank.open();
         } else {
-            RS2Object tree = getObjects().closest("Tree");
-
-            if(tree != null) {
-                if(!myPlayer().isAnimating()) {
-                    tree.interact("Chop down");
-
-                    getMouse().moveOutsideScreen();
-
-                    sleep(random(2000, 5000));
-                }
-            }
-
+            bank.depositAllExcept("Bronze axe");
         }
+    }
 
-
-        return 602;
+    private void checkItem() throws InterruptedException {
+        if(!getInventory().contains("Bronze axe")) {
+            if(!bankArea.contains(myPosition())) {
+                if(getWalking().webWalk(bankArea)) {
+                    new ConditionalSleep(5000, 250) {
+                        @Override
+                        public boolean condition() throws InterruptedException {
+                            return false;
+                        }
+                    }.sleep();
+                }
+            } else if(!bank.isOpen()) {
+                bank.open();
+            } else {
+                bank.depositAll();
+                bank.withdraw("Bronze axe", 1);
+                bank.close();
+            }
+        }
     }
 
 
